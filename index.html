@@ -1,0 +1,2396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pacific Epidemic Intelligence Atlas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      :root {
+        --bg: #f2f4ef;
+        --bg-deep: #dfe9e2;
+        --surface: rgba(255, 255, 255, 0.84);
+        --surface-strong: rgba(255, 255, 255, 0.96);
+        --surface-tint: rgba(228, 242, 236, 0.82);
+        --ink: #102335;
+        --ink-soft: #405767;
+        --line: rgba(16, 35, 53, 0.08);
+        --accent: #0f766e;
+        --accent-strong: #0b5f59;
+        --accent-soft: rgba(15, 118, 110, 0.14);
+        --secondary: #b7791f;
+        --danger: #c2410c;
+        --danger-soft: rgba(194, 65, 12, 0.14);
+        --shadow: 0 24px 80px rgba(16, 35, 53, 0.14);
+        --radius-xl: 32px;
+        --radius-lg: 24px;
+        --radius-md: 18px;
+        --radius-sm: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Roboto", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+          radial-gradient(circle at top right, rgba(183, 121, 31, 0.14), transparent 26%),
+          linear-gradient(180deg, #f7faf6 0%, var(--bg) 48%, var(--bg-deep) 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(16, 35, 53, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(16, 35, 53, 0.03) 1px, transparent 1px);
+        background-size: 36px 36px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 70%);
+      }
+
+      a {
+        color: var(--accent-strong);
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app-shell {
+        position: relative;
+        width: min(1500px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+        gap: 24px;
+        padding: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 38px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(240, 247, 243, 0.78)),
+          linear-gradient(180deg, rgba(15, 118, 110, 0.05), transparent 70%);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+        overflow: hidden;
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-copy h1 {
+        margin: 8px 0 18px;
+        max-width: 14ch;
+        font-family: "Roboto", "Segoe UI", sans-serif;
+        font-size: clamp(2.5rem, 4vw, 4.6rem);
+        line-height: 0.96;
+        letter-spacing: -0.04em;
+      }
+
+      .hero-copy p {
+        margin: 0;
+        max-width: 72ch;
+        font-size: 1rem;
+        line-height: 1.7;
+        color: var(--ink-soft);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.76rem;
+        font-weight: 800;
+        color: var(--accent-strong);
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 38px;
+        height: 1px;
+        background: linear-gradient(90deg, var(--accent-strong), transparent);
+      }
+
+      .hero-aside {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .hero-panel {
+        padding: 20px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.64);
+      }
+
+      .hero-panel h2 {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        letter-spacing: 0.02em;
+      }
+
+      .hero-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .hero-meta {
+        padding: 14px;
+        border-radius: 18px;
+        background: var(--surface-tint);
+        border: 1px solid rgba(15, 118, 110, 0.12);
+      }
+
+      .hero-meta span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--ink-soft);
+      }
+
+      .hero-meta strong {
+        display: block;
+        font-size: 1.2rem;
+        line-height: 1.2;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        gap: 22px;
+        margin-top: 22px;
+      }
+
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--radius-xl);
+        background: var(--surface);
+        backdrop-filter: blur(14px);
+        box-shadow: var(--shadow);
+      }
+
+      .card-pad {
+        padding: 26px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .section-head h2,
+      .section-head h3 {
+        margin: 4px 0 0;
+        font-family: "Roboto", "Segoe UI", sans-serif;
+        font-size: clamp(1.4rem, 2vw, 2rem);
+        letter-spacing: -0.03em;
+      }
+
+      .section-head p {
+        margin: 7px 0 0;
+        color: var(--ink-soft);
+        line-height: 1.6;
+      }
+
+      .subtle-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(16, 35, 53, 0.05);
+        color: var(--ink-soft);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .controls-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .control {
+        display: grid;
+        gap: 8px;
+      }
+
+      .control span {
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+
+      .control input,
+      .control select {
+        width: 100%;
+        min-height: 50px;
+        padding: 0 16px;
+        border: 1px solid rgba(16, 35, 53, 0.09);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--ink);
+        transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+      }
+
+      .control input:focus,
+      .control select:focus {
+        outline: none;
+        border-color: rgba(15, 118, 110, 0.5);
+        box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+        transform: translateY(-1px);
+      }
+
+      .control input[type="search"]::-webkit-search-cancel-button {
+        appearance: none;
+      }
+
+      .control-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+        color: white;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        box-shadow: 0 14px 30px rgba(15, 118, 110, 0.18);
+        transition: transform 180ms ease, filter 180ms ease;
+      }
+
+      .button:hover {
+        filter: brightness(1.04);
+        transform: translateY(-1px);
+      }
+
+      .ghost-button {
+        background: rgba(16, 35, 53, 0.05);
+        color: var(--ink);
+        box-shadow: none;
+      }
+
+      .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(16, 35, 53, 0.06);
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .metric-card {
+        padding: 22px;
+        border-radius: 26px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 246, 0.78));
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        box-shadow: var(--shadow);
+      }
+
+      .metric-card span {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+
+      .metric-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: clamp(1.8rem, 3vw, 2.8rem);
+        font-family: "Roboto", "Segoe UI", sans-serif;
+        letter-spacing: -0.05em;
+      }
+
+      .metric-card p {
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.6;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.8fr);
+        gap: 22px;
+      }
+
+      .map-shell {
+        position: relative;
+        min-height: 640px;
+        overflow: hidden;
+      }
+
+      .map-shell .section-head {
+        margin-bottom: 14px;
+      }
+
+      #map {
+        height: 520px;
+        width: 100%;
+        border-radius: 26px;
+        overflow: hidden;
+        border: 1px solid rgba(16, 35, 53, 0.07);
+      }
+
+      .map-caption {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: rgba(16, 35, 53, 0.05);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+      }
+
+      .focus-panel {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 18px;
+        min-height: 640px;
+      }
+
+      .focus-summary {
+        display: grid;
+        gap: 16px;
+      }
+
+      .focus-country-name {
+        margin: 6px 0 0;
+        font-family: "Roboto", "Segoe UI", sans-serif;
+        font-size: clamp(1.7rem, 2.4vw, 2.4rem);
+        letter-spacing: -0.04em;
+      }
+
+      .focus-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .stat-box {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(248, 251, 249, 0.92);
+        border: 1px solid rgba(16, 35, 53, 0.06);
+      }
+
+      .stat-box span {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--ink-soft);
+        font-weight: 800;
+      }
+
+      .stat-box strong {
+        display: block;
+        font-size: 1.25rem;
+      }
+
+      .status-list,
+      .disease-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .mini-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mini-row span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .mini-row strong {
+        font-size: 0.9rem;
+      }
+
+      .selected-record {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .record-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .record-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(16, 35, 53, 0.05);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .record-narrative {
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(248, 251, 249, 0.92);
+        border: 1px solid rgba(16, 35, 53, 0.06);
+        color: var(--ink-soft);
+        line-height: 1.7;
+        max-height: 240px;
+        overflow: auto;
+      }
+
+      .record-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .record-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.08);
+        text-decoration: none;
+        font-weight: 800;
+      }
+
+      details {
+        border-radius: 18px;
+        background: rgba(248, 251, 249, 0.92);
+        border: 1px solid rgba(16, 35, 53, 0.06);
+        padding: 16px 18px;
+      }
+
+      details summary {
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      pre {
+        margin: 14px 0 0;
+        padding: 14px;
+        border-radius: 14px;
+        background: rgba(16, 35, 53, 0.05);
+        overflow: auto;
+        color: var(--ink);
+        font-size: 0.82rem;
+        line-height: 1.5;
+      }
+
+      .analytics-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+        gap: 22px;
+      }
+
+      .chart-card {
+        min-height: 390px;
+      }
+
+      .timeline-card {
+        min-height: 390px;
+      }
+
+      .chart-host {
+        width: 100%;
+        height: 290px;
+      }
+
+      .chart-host svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .chart-note {
+        margin-top: 8px;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.6;
+      }
+
+      .table-card {
+        overflow: hidden;
+      }
+
+      .table-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+
+      .table-wrap {
+        overflow: auto;
+        border-radius: 22px;
+        border: 1px solid rgba(16, 35, 53, 0.06);
+        background: rgba(255, 255, 255, 0.75);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: rgba(248, 251, 249, 0.98);
+        text-align: left;
+        padding: 16px 18px;
+        font-size: 0.75rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        border-bottom: 1px solid rgba(16, 35, 53, 0.08);
+        white-space: nowrap;
+      }
+
+      thead th button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+        cursor: pointer;
+      }
+
+      tbody td {
+        padding: 15px 18px;
+        border-bottom: 1px solid rgba(16, 35, 53, 0.05);
+        vertical-align: top;
+      }
+
+      tbody tr {
+        transition: background 180ms ease, transform 180ms ease;
+        cursor: pointer;
+      }
+
+      tbody tr:hover {
+        background: rgba(15, 118, 110, 0.05);
+      }
+
+      tbody tr.is-selected {
+        background: rgba(15, 118, 110, 0.09);
+      }
+
+      .muted {
+        color: var(--ink-soft);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 800;
+      }
+
+      .source-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 88px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(16, 35, 53, 0.06);
+        font-size: 0.76rem;
+        font-weight: 800;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+
+      .pagination-controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      .empty-state {
+        display: grid;
+        place-items: center;
+        min-height: 220px;
+        padding: 28px;
+        text-align: center;
+        color: var(--ink-soft);
+      }
+
+      .loader-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(242, 244, 239, 0.84);
+        backdrop-filter: blur(10px);
+        z-index: 5000;
+      }
+
+      .loader-overlay.is-visible {
+        display: flex;
+      }
+
+      .loader-card {
+        width: min(680px, 100%);
+        padding: 28px;
+        border-radius: 30px;
+        background: var(--surface-strong);
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.72);
+      }
+
+      .loader-card h2 {
+        margin: 0 0 12px;
+        font-family: "Roboto", "Segoe UI", sans-serif;
+        font-size: clamp(1.8rem, 3vw, 2.8rem);
+        letter-spacing: -0.04em;
+      }
+
+      .loader-card p {
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.7;
+      }
+
+      .loader-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .loader-status {
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: rgba(16, 35, 53, 0.05);
+        color: var(--ink-soft);
+        line-height: 1.6;
+      }
+
+      .footer-note {
+        margin-top: 14px;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.7;
+      }
+
+      .leaflet-container {
+        font: inherit;
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+          linear-gradient(180deg, rgba(229, 243, 238, 0.95), rgba(241, 246, 243, 0.95));
+      }
+
+      .leaflet-tooltip.map-tooltip {
+        padding: 0;
+        border: 0;
+        border-radius: 18px;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .leaflet-tooltip.map-tooltip::before {
+        display: none;
+      }
+
+      .tooltip-card {
+        min-width: 220px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(16, 35, 53, 0.92);
+        color: white;
+        box-shadow: 0 20px 44px rgba(16, 35, 53, 0.35);
+      }
+
+      .tooltip-card h4 {
+        margin: 0 0 10px;
+        font-size: 1rem;
+      }
+
+      .tooltip-card dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 10px;
+        margin: 0;
+        font-size: 0.84rem;
+      }
+
+      .tooltip-card dt {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .tooltip-card dd {
+        margin: 0;
+        text-align: right;
+      }
+
+      .reveal {
+        animation: riseIn 700ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+      }
+
+      .reveal:nth-child(2) {
+        animation-delay: 70ms;
+      }
+
+      .reveal:nth-child(3) {
+        animation-delay: 120ms;
+      }
+
+      .reveal:nth-child(4) {
+        animation-delay: 170ms;
+      }
+
+      @keyframes riseIn {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 1260px) {
+        .controls-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .analytics-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .timeline-card {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 1080px) {
+        .hero,
+        .main-grid,
+        .analytics-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metrics-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .focus-panel {
+          min-height: auto;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          width: min(100vw - 20px, 1500px);
+          padding-top: 20px;
+        }
+
+        .hero,
+        .card-pad {
+          padding: 20px;
+        }
+
+        .controls-grid,
+        .metrics-grid,
+        .focus-grid,
+        .hero-meta-grid {
+          grid-template-columns: 1fr;
+        }
+
+        #map {
+          height: 440px;
+        }
+
+        .chart-host {
+          height: 260px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader-overlay is-visible" id="loaderOverlay">
+      <div class="loader-card">
+        <p class="eyebrow">Data access</p>
+        <h2>Load epidemic intelligence data</h2>
+        <p>
+          The dashboard loads <strong>data/epidemics.json</strong> automatically. If loading fails, verify that
+          the dataset is available at that path and retry.
+        </p>
+        <div class="loader-actions">
+          <button class="button" id="retryAutoLoad">Retry auto-load</button>
+        </div>
+        <div class="loader-status" id="loaderStatus">Attempting to load data/epidemics.json...</div>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <header class="hero reveal">
+        <div class="hero-copy">
+          <p class="eyebrow">Pacific Epidemic Intelligence</p>
+          <h1>Elegant outbreak surveillance across time, disease, and geography.</h1>
+          <p>
+            This single-page atlas turns the unified <strong>epidemics.json</strong> dataset into an operational
+            picture: a Pacific-first map with alert overlays, dynamic filters, historical trend views, and a
+            searchable alert ledger that stays anchored to the underlying source records.
+          </p>
+        </div>
+        <aside class="hero-aside">
+          <section class="hero-panel">
+            <h2>Operational snapshot</h2>
+            <div class="hero-meta-grid">
+              <div class="hero-meta">
+                <span>Records loaded</span>
+                <strong id="heroRecordCount">-</strong>
+              </div>
+              <div class="hero-meta">
+                <span>Country footprint</span>
+                <strong id="heroCountryCount">-</strong>
+              </div>
+              <div class="hero-meta">
+                <span>Disease profiles</span>
+                <strong id="heroDiseaseCount">-</strong>
+              </div>
+              <div class="hero-meta">
+                <span>Year range</span>
+                <strong id="heroYearRange">-</strong>
+              </div>
+            </div>
+          </section>
+          <section class="hero-panel">
+            <h2>Source integrity</h2>
+            <p id="heroSourceNote">
+              The dashboard preserves the merged source lineage so every alert can be traced back to its raw SPC
+              or ReliefWeb record.
+            </p>
+          </section>
+        </aside>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="card card-pad reveal">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Intelligence filters</p>
+              <h2>Refine the operational picture</h2>
+              <p>Filter the surveillance view by year, disease, type, status, country, source, or narrative text.</p>
+            </div>
+            <div class="control-actions">
+              <button class="button ghost-button" id="resetFilters">Reset filters</button>
+            </div>
+          </div>
+          <div class="controls-grid">
+            <label class="control">
+              <span>Search</span>
+              <input id="searchInput" type="search" placeholder="Country, disease, source, excerpt" />
+            </label>
+            <label class="control">
+              <span>Year</span>
+              <select id="yearFilter"></select>
+            </label>
+            <label class="control">
+              <span>Disease</span>
+              <select id="diseaseFilter"></select>
+            </label>
+            <label class="control">
+              <span>Disease type</span>
+              <select id="typeFilter"></select>
+            </label>
+            <label class="control">
+              <span>Status</span>
+              <select id="statusFilter"></select>
+            </label>
+            <label class="control">
+              <span>Country</span>
+              <select id="countryFilter"></select>
+            </label>
+            <label class="control">
+              <span>Source</span>
+              <select id="sourceFilter"></select>
+            </label>
+          </div>
+          <div class="filter-chips" id="activeFilterChips"></div>
+        </section>
+
+        <section class="metrics-grid reveal" id="metricsGrid"></section>
+
+        <section class="main-grid reveal">
+          <article class="card card-pad map-shell">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Spatial overlay</p>
+                <h2>Alert intensity across the Pacific</h2>
+                <p>Bubble size reflects filtered alert volume per country. Color signals the highest status pressure.</p>
+              </div>
+              <div class="subtle-tag" id="mapSummaryTag">No data yet</div>
+            </div>
+            <div id="map"></div>
+            <div class="map-caption">
+              <div class="legend" id="statusLegend"></div>
+              <div id="mapCaptionText">Hover or click a country marker for detail.</div>
+            </div>
+          </article>
+
+          <aside class="card card-pad focus-panel">
+            <section class="focus-summary">
+              <div>
+                <p class="eyebrow">Country focus</p>
+                <h2 class="focus-country-name" id="focusCountryName">Awaiting data</h2>
+                <p class="muted" id="focusCountryIntro">Select a marker or table row to inspect the latest alert context.</p>
+              </div>
+              <div class="focus-grid" id="focusStatGrid"></div>
+              <div class="focus-grid">
+                <div>
+                  <h3>Statuses in scope</h3>
+                  <div class="status-list" id="focusStatusList"></div>
+                </div>
+                <div>
+                  <h3>Leading diseases</h3>
+                  <div class="disease-list" id="focusDiseaseList"></div>
+                </div>
+              </div>
+            </section>
+            <section class="selected-record">
+              <div>
+                <p class="eyebrow">Selected alert</p>
+                <h3 id="selectedRecordTitle">No alert selected</h3>
+                <p class="muted" id="selectedRecordSubtitle">The most relevant filtered alert will appear here.</p>
+              </div>
+              <div class="record-meta" id="selectedRecordMeta"></div>
+              <div class="record-narrative" id="selectedRecordNarrative">No narrative available.</div>
+              <div class="record-links" id="selectedRecordLinks"></div>
+              <details>
+                <summary>Show raw source record</summary>
+                <pre id="rawRecordPreview">No source record available.</pre>
+              </details>
+            </section>
+          </aside>
+        </section>
+
+        <section class="analytics-grid reveal">
+          <article class="card card-pad timeline-card">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Historical trend</p>
+                <h2>Monthly alert pulse</h2>
+                <p>Alerts are aggregated by reporting month within the current filter scope.</p>
+              </div>
+              <div class="subtle-tag" id="timelineWindow">-</div>
+            </div>
+            <div class="chart-host" id="timelineChart"></div>
+            <div class="chart-note">
+              The filled curve shows alert volume. The overlaid line smooths the signal using a three-month moving average.
+            </div>
+          </article>
+
+          <article class="card card-pad chart-card">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Disease mix</p>
+                <h2>Most frequent diseases</h2>
+                <p>Top diseases ranked by filtered alert count.</p>
+              </div>
+            </div>
+            <div class="chart-host" id="diseaseChart"></div>
+            <div class="chart-note">Bars inherit the dominant disease-type color to keep the epidemiological context visible.</div>
+          </article>
+
+          <article class="card card-pad chart-card">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Country ranking</p>
+                <h2>Alerts per country</h2>
+                <p>Countries ordered by the number of filtered alert records.</p>
+              </div>
+            </div>
+            <div class="chart-host" id="countryChart"></div>
+            <div class="chart-note">Countries inherit the highest operational status pressure visible in the filtered set.</div>
+          </article>
+        </section>
+
+        <section class="card card-pad table-card reveal">
+          <div class="table-toolbar">
+            <div>
+              <p class="eyebrow">Historical ledger</p>
+              <h2>Alert record table</h2>
+              <p class="muted" id="tableSummary">No records loaded.</p>
+            </div>
+            <div class="subtle-tag" id="selectedRecordRef">Source reference unavailable</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><button type="button" data-sort="date">Date</button></th>
+                  <th><button type="button" data-sort="country">Country</button></th>
+                  <th><button type="button" data-sort="disease">Disease</button></th>
+                  <th><button type="button" data-sort="type">Type</button></th>
+                  <th><button type="button" data-sort="status">Status</button></th>
+                  <th><button type="button" data-sort="cases">Cases</button></th>
+                  <th><button type="button" data-sort="deaths">Deaths</button></th>
+                  <th><button type="button" data-sort="source">Source</button></th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <div class="muted" id="paginationSummary">No rows to display.</div>
+            <div class="pagination-controls">
+              <button class="button ghost-button" id="prevPage">Previous</button>
+              <button class="button ghost-button" id="nextPage">Next</button>
+            </div>
+          </div>
+          <p class="footer-note">
+            Case and death values are shown exactly as reported in each alert record. They may represent cumulative outbreak figures rather than unique incident counts.
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const COUNTRY_ALIASES = {
+        "Federated states of Micronesia": "Micronesia",
+        "Micronesia (Federated States of)": "Micronesia",
+        "French Polynesia (France)": "French Polynesia",
+        "New Caledonia (France)": "New Caledonia",
+        "Northern Mariana Islands (The United States of America)": "Northern Mariana Islands",
+        "Wallis & Futuna": "Wallis and Futuna",
+        "Wallis and Futuna (France)": "Wallis and Futuna",
+      };
+      const EXCLUDED_COUNTRIES = new Set(["New Zealand"]);
+      const PACIFIC_OVERVIEW = {
+        center: [-12, -155],
+        zoom: 3.25,
+      };
+
+      const STATUS_BUCKET_ORDER = ["Escalating", "Active", "Monitoring", "Watch", "Closed", "Other"];
+      const STATUS_COLORS = {
+        Escalating: "#c2410c",
+        Active: "#0f766e",
+        Monitoring: "#b7791f",
+        Watch: "#64748b",
+        Closed: "#94a3b8",
+        Other: "#475569",
+      };
+      const TYPE_COLORS = {
+        "Vector-borne": "#0f766e",
+        Airborne: "#1d4ed8",
+        "Food/Water-borne": "#b7791f",
+        Unknown: "#6b7280",
+      };
+
+      const state = {
+        rawData: null,
+        records: [],
+        filteredRecords: [],
+        filteredSortedRecords: [],
+        selectedCountry: null,
+        selectedRecordId: null,
+        currentPage: 1,
+        pageSize: 14,
+        sortKey: "date",
+        sortDir: "desc",
+        filters: {
+          search: "",
+          year: "All",
+          disease: "All",
+          diseaseType: "All",
+          status: "All",
+          country: "All",
+          source: "All",
+        },
+        map: {
+          instance: null,
+          layer: null,
+          mode: "overview",
+        },
+      };
+
+      const elements = {
+        loaderOverlay: document.getElementById("loaderOverlay"),
+        loaderStatus: document.getElementById("loaderStatus"),
+        retryAutoLoad: document.getElementById("retryAutoLoad"),
+        heroRecordCount: document.getElementById("heroRecordCount"),
+        heroCountryCount: document.getElementById("heroCountryCount"),
+        heroDiseaseCount: document.getElementById("heroDiseaseCount"),
+        heroYearRange: document.getElementById("heroYearRange"),
+        heroSourceNote: document.getElementById("heroSourceNote"),
+        searchInput: document.getElementById("searchInput"),
+        yearFilter: document.getElementById("yearFilter"),
+        diseaseFilter: document.getElementById("diseaseFilter"),
+        typeFilter: document.getElementById("typeFilter"),
+        statusFilter: document.getElementById("statusFilter"),
+        countryFilter: document.getElementById("countryFilter"),
+        sourceFilter: document.getElementById("sourceFilter"),
+        resetFilters: document.getElementById("resetFilters"),
+        activeFilterChips: document.getElementById("activeFilterChips"),
+        metricsGrid: document.getElementById("metricsGrid"),
+        mapElement: document.getElementById("map"),
+        mapSummaryTag: document.getElementById("mapSummaryTag"),
+        mapCaptionText: document.getElementById("mapCaptionText"),
+        statusLegend: document.getElementById("statusLegend"),
+        focusCountryName: document.getElementById("focusCountryName"),
+        focusCountryIntro: document.getElementById("focusCountryIntro"),
+        focusStatGrid: document.getElementById("focusStatGrid"),
+        focusStatusList: document.getElementById("focusStatusList"),
+        focusDiseaseList: document.getElementById("focusDiseaseList"),
+        selectedRecordTitle: document.getElementById("selectedRecordTitle"),
+        selectedRecordSubtitle: document.getElementById("selectedRecordSubtitle"),
+        selectedRecordMeta: document.getElementById("selectedRecordMeta"),
+        selectedRecordNarrative: document.getElementById("selectedRecordNarrative"),
+        selectedRecordLinks: document.getElementById("selectedRecordLinks"),
+        rawRecordPreview: document.getElementById("rawRecordPreview"),
+        timelineWindow: document.getElementById("timelineWindow"),
+        timelineChart: document.getElementById("timelineChart"),
+        diseaseChart: document.getElementById("diseaseChart"),
+        countryChart: document.getElementById("countryChart"),
+        tableSummary: document.getElementById("tableSummary"),
+        selectedRecordRef: document.getElementById("selectedRecordRef"),
+        tableBody: document.getElementById("tableBody"),
+        paginationSummary: document.getElementById("paginationSummary"),
+        prevPage: document.getElementById("prevPage"),
+        nextPage: document.getElementById("nextPage"),
+      };
+
+      const numberFormat = d3.format(",");
+      const monthFormat = d3.utcFormat("%b %Y");
+      const dayFormat = d3.utcFormat("%d %b %Y");
+
+      init();
+
+      async function init() {
+        bindEvents();
+        renderLegend();
+        initializeMap();
+        await attemptAutoLoad();
+        window.addEventListener("resize", debounce(handleResize, 120));
+      }
+
+      function bindEvents() {
+        elements.retryAutoLoad.addEventListener("click", () => {
+          updateLoaderStatus("Retrying auto-load from data/epidemics.json...");
+          attemptAutoLoad();
+        });
+
+        elements.searchInput.addEventListener("input", (event) => {
+          state.filters.search = event.target.value.trim().toLowerCase();
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.yearFilter.addEventListener("change", (event) => {
+          state.filters.year = event.target.value;
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.diseaseFilter.addEventListener("change", (event) => {
+          state.filters.disease = event.target.value;
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.typeFilter.addEventListener("change", (event) => {
+          state.filters.diseaseType = event.target.value;
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.statusFilter.addEventListener("change", (event) => {
+          state.filters.status = event.target.value;
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.countryFilter.addEventListener("change", (event) => {
+          state.filters.country = event.target.value;
+          state.selectedCountry = event.target.value === "All" ? null : event.target.value;
+          state.map.mode = event.target.value === "All" ? "overview" : "country";
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.sourceFilter.addEventListener("change", (event) => {
+          state.filters.source = event.target.value;
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+        elements.resetFilters.addEventListener("click", () => {
+          state.filters = {
+            search: "",
+            year: "All",
+            disease: "All",
+            diseaseType: "All",
+            status: "All",
+            country: "All",
+            source: "All",
+          };
+          state.selectedCountry = null;
+          state.selectedRecordId = null;
+          state.map.mode = "overview";
+          state.currentPage = 1;
+          elements.searchInput.value = "";
+          [
+            elements.yearFilter,
+            elements.diseaseFilter,
+            elements.typeFilter,
+            elements.statusFilter,
+            elements.countryFilter,
+            elements.sourceFilter,
+          ].forEach((select) => {
+            select.value = "All";
+          });
+          applyFilters();
+        });
+
+        document.querySelectorAll("thead button[data-sort]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const sortKey = button.getAttribute("data-sort");
+            if (state.sortKey === sortKey) {
+              state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+            } else {
+              state.sortKey = sortKey;
+              state.sortDir = sortKey === "date" ? "desc" : "asc";
+            }
+            renderTable();
+          });
+        });
+
+        elements.prevPage.addEventListener("click", () => {
+          state.currentPage = Math.max(1, state.currentPage - 1);
+          renderTable();
+        });
+
+        elements.nextPage.addEventListener("click", () => {
+          const totalPages = Math.max(1, Math.ceil(state.filteredSortedRecords.length / state.pageSize));
+          state.currentPage = Math.min(totalPages, state.currentPage + 1);
+          renderTable();
+        });
+      }
+
+      async function attemptAutoLoad() {
+        try {
+          const response = await fetch("data/epidemics.json", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          const data = await response.json();
+          loadDataset(data, "data/epidemics.json");
+          hideLoader();
+        } catch (error) {
+          showLoader();
+          updateLoaderStatus(
+            `Automatic loading is unavailable (${escapeHtml(String(error.message || error))}). ` +
+              "Serve this dashboard over HTTP and confirm data/epidemics.json is reachable, then retry."
+          );
+        }
+      }
+
+      function loadDataset(data, label) {
+        const records = Array.isArray(data?.records) ? data.records : [];
+        state.rawData = data;
+        state.records = prepareRecords(records);
+        state.selectedCountry = null;
+        state.selectedRecordId = null;
+        state.map.mode = "overview";
+        state.currentPage = 1;
+        populateFilterOptions();
+        updateHero(label);
+        applyFilters();
+      }
+
+      function prepareRecords(records) {
+        return records
+          .map((record, index) => {
+            const dateValue = parseRecordDate(record);
+            const narrativeSource = (record.report_text || record.description || "").trim();
+            const lat = toNumber(record.location?.lat);
+            const lon = normalizeLongitude(toNumber(record.location?.lon));
+            const sourceNames = Array.isArray(record.source_names) ? record.source_names.filter(Boolean) : [];
+            const sourceUrls = Array.isArray(record.source_urls) ? record.source_urls.filter(Boolean) : [];
+            const displayCountry = normalizeCountryName(record.country);
+            return {
+              ...record,
+              index,
+              dateValue,
+              year: dateValue ? String(dateValue.getUTCFullYear()) : "Unknown",
+              monthKey: dateValue ? d3.utcMonth.floor(dateValue) : null,
+              normalizedCountry: displayCountry,
+              normalizedDiseaseType: record.disease_type || "Unknown",
+              normalizedStatus: record.status || "Unknown",
+              statusBucket: deriveStatusBucket(record.status),
+              casesValue: toNumber(record.cases),
+              deathsValue: toNumber(record.deaths),
+              lat,
+              lon,
+              hasGeo: Number.isFinite(lat) && Number.isFinite(lon),
+              sourceNames,
+              sourceUrls,
+              narrativeSource,
+              searchText: [
+                displayCountry,
+                record.country,
+                record.disease,
+                record.disease_type,
+                record.status,
+                record.report_title,
+                sourceNames.join(" "),
+                narrativeSource.slice(0, 320),
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase(),
+            };
+          })
+          .filter((record) => !EXCLUDED_COUNTRIES.has(record.normalizedCountry));
+      }
+
+      function parseRecordDate(record) {
+        const candidates = [record.report_date_iso, record.event_date, record.report_date];
+        for (const candidate of candidates) {
+          if (!candidate) {
+            continue;
+          }
+          const parsed = new Date(candidate);
+          if (!Number.isNaN(parsed.getTime())) {
+            return parsed;
+          }
+        }
+        if (record.report_date) {
+          const parsed = d3.timeParse("%d %b %Y")(record.report_date);
+          if (parsed) {
+            return parsed;
+          }
+        }
+        return null;
+      }
+
+      function populateFilterOptions() {
+        populateSelect(elements.yearFilter, ["All", ...uniqueValues(state.records.map((record) => record.year)).sort((a, b) => b.localeCompare(a))], state.filters.year);
+        populateSelect(elements.diseaseFilter, ["All", ...uniqueValues(state.records.map((record) => record.disease))], state.filters.disease);
+        populateSelect(elements.typeFilter, ["All", ...uniqueValues(state.records.map((record) => record.normalizedDiseaseType))], state.filters.diseaseType);
+        populateSelect(elements.statusFilter, ["All", ...uniqueValues(state.records.map((record) => record.normalizedStatus))], state.filters.status);
+        populateSelect(elements.countryFilter, ["All", ...uniqueValues(state.records.map((record) => record.normalizedCountry))], state.filters.country);
+        populateSelect(elements.sourceFilter, ["All", ...uniqueValues(state.records.map((record) => formatSourceSystem(record.source_system)))], state.filters.source);
+      }
+
+      function populateSelect(select, options, selectedValue) {
+        select.innerHTML = options
+          .map((option) => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
+          .join("");
+        select.value = options.includes(selectedValue) ? selectedValue : "All";
+      }
+
+      function updateHero(label) {
+        const normalizedCountryCount = new Set(state.records.map((record) => record.normalizedCountry)).size;
+        const diseaseCount = new Set(state.records.map((record) => record.disease)).size;
+        const years = state.records
+          .filter((record) => record.year !== "Unknown")
+          .map((record) => Number(record.year));
+        const minYear = years.length ? d3.min(years) : null;
+        const maxYear = years.length ? d3.max(years) : null;
+        elements.heroRecordCount.textContent = numberFormat(state.records.length);
+        elements.heroCountryCount.textContent = numberFormat(normalizedCountryCount);
+        elements.heroDiseaseCount.textContent = numberFormat(diseaseCount);
+        elements.heroYearRange.textContent = minYear && maxYear ? `${minYear} to ${maxYear}` : "Undated";
+
+        const spcCount = state.rawData?.source_record_counts?.spc ?? 0;
+        const reliefwebCount = state.rawData?.source_record_counts?.reliefweb ?? 0;
+        elements.heroSourceNote.textContent =
+          `Loaded from ${label}. The current file preserves ${numberFormat(spcCount)} SPC records and ` +
+          `${numberFormat(reliefwebCount)} ReliefWeb records under source_documents. ` +
+          `Dashboard views exclude New Zealand.`;
+      }
+
+      function applyFilters() {
+        const filtered = state.records.filter((record) => {
+          if (state.filters.year !== "All" && record.year !== state.filters.year) {
+            return false;
+          }
+          if (state.filters.disease !== "All" && record.disease !== state.filters.disease) {
+            return false;
+          }
+          if (state.filters.diseaseType !== "All" && record.normalizedDiseaseType !== state.filters.diseaseType) {
+            return false;
+          }
+          if (state.filters.status !== "All" && record.normalizedStatus !== state.filters.status) {
+            return false;
+          }
+          if (state.filters.country !== "All" && record.normalizedCountry !== state.filters.country) {
+            return false;
+          }
+          if (state.filters.source !== "All" && formatSourceSystem(record.source_system) !== state.filters.source) {
+            return false;
+          }
+          if (state.filters.search && !record.searchText.includes(state.filters.search)) {
+            return false;
+          }
+          return true;
+        });
+
+        state.filteredRecords = filtered;
+        state.filteredSortedRecords = sortRecords(filtered.slice());
+
+        if (!state.filteredRecords.length) {
+          state.selectedCountry = null;
+          state.selectedRecordId = null;
+          renderEverything();
+          return;
+        }
+
+        if (!state.selectedCountry || !state.filteredRecords.some((record) => record.normalizedCountry === state.selectedCountry)) {
+          state.selectedCountry = buildCountrySummaries(state.filteredRecords)[0]?.country || null;
+        }
+
+        const recordsForSelectedCountry = state.filteredSortedRecords.filter(
+          (record) => record.normalizedCountry === state.selectedCountry
+        );
+
+        if (!state.selectedRecordId || !recordsForSelectedCountry.some((record) => record.record_id === state.selectedRecordId)) {
+          state.selectedRecordId = recordsForSelectedCountry[0]?.record_id || state.filteredSortedRecords[0]?.record_id || null;
+        }
+
+        renderEverything();
+      }
+
+      function renderEverything() {
+        renderActiveFilters();
+        renderMetrics();
+        renderMap();
+        renderFocusPanel();
+        renderTimeline();
+        renderDiseaseChart();
+        renderCountryChart();
+        renderTable();
+      }
+
+      function renderActiveFilters() {
+        const chips = [];
+        if (state.filters.search) chips.push({ label: "Search", value: state.filters.search });
+        if (state.filters.year !== "All") chips.push({ label: "Year", value: state.filters.year });
+        if (state.filters.disease !== "All") chips.push({ label: "Disease", value: state.filters.disease });
+        if (state.filters.diseaseType !== "All") chips.push({ label: "Disease type", value: state.filters.diseaseType });
+        if (state.filters.status !== "All") chips.push({ label: "Status", value: state.filters.status });
+        if (state.filters.country !== "All") chips.push({ label: "Country", value: state.filters.country });
+        if (state.filters.source !== "All") chips.push({ label: "Source", value: state.filters.source });
+
+        if (!chips.length) {
+          elements.activeFilterChips.innerHTML = '<div class="chip">Showing the full operational picture</div>';
+          return;
+        }
+
+        elements.activeFilterChips.innerHTML = chips
+          .map((chip) => `<div class="chip"><strong>${escapeHtml(chip.label)}:</strong> ${escapeHtml(chip.value)}</div>`)
+          .join("");
+      }
+
+      function renderMetrics() {
+        const summaries = buildCountrySummaries(state.filteredRecords);
+        const escalatingAlerts = state.filteredRecords.filter((record) => record.statusBucket === "Escalating").length;
+        const activeAlerts = state.filteredRecords.filter((record) => ["Active", "Monitoring", "Watch"].includes(record.statusBucket)).length;
+        const diseaseCount = new Set(state.filteredRecords.map((record) => record.disease)).size;
+        const countriesCount = new Set(state.filteredRecords.map((record) => record.normalizedCountry)).size;
+        const topCountry = summaries[0];
+
+        const metrics = [
+          {
+            label: "Alerts in scope",
+            value: numberFormat(state.filteredRecords.length),
+            note: "Filtered alert records currently visible across the dashboard.",
+          },
+          {
+            label: "Countries affected",
+            value: numberFormat(countriesCount),
+            note: "Normalized country footprint after applying the current filters.",
+          },
+          {
+            label: "Disease profiles",
+            value: numberFormat(diseaseCount),
+            note: `${numberFormat(escalatingAlerts)} escalating alerts and ${numberFormat(activeAlerts)} active or monitored alerts remain in view.`,
+          },
+          {
+            label: "Most signalled country",
+            value: topCountry ? topCountry.country : "-",
+            note: topCountry
+              ? `${numberFormat(topCountry.alertCount)} alerts and ${numberFormat(topCountry.diseaseCount)} diseases in the filtered set.`
+              : "No country remains in the current filter scope.",
+          },
+        ];
+
+        elements.metricsGrid.innerHTML = metrics
+          .map(
+            (metric) => `
+              <article class="metric-card">
+                <span>${escapeHtml(metric.label)}</span>
+                <strong>${escapeHtml(metric.value)}</strong>
+                <p>${escapeHtml(metric.note)}</p>
+              </article>
+            `
+          )
+          .join("");
+      }
+
+      function renderLegend() {
+        elements.statusLegend.innerHTML = STATUS_BUCKET_ORDER.map(
+          (bucket) => `
+            <div class="legend-item">
+              <span class="legend-dot" style="background:${STATUS_COLORS[bucket]}"></span>
+              ${escapeHtml(bucket)}
+            </div>
+          `
+        ).join("");
+      }
+
+      function initializeMap() {
+        const map = L.map(elements.mapElement, {
+          zoomControl: false,
+          attributionControl: false,
+          preferCanvas: true,
+          worldCopyJump: true,
+          minZoom: 2,
+          maxZoom: 8,
+          zoomSnap: 0.25,
+          zoomDelta: 0.5,
+        }).setView(PACIFIC_OVERVIEW.center, PACIFIC_OVERVIEW.zoom);
+
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png", {
+          subdomains: "abcd",
+          maxZoom: 8,
+          minZoom: 2,
+        }).addTo(map);
+
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {
+          subdomains: "abcd",
+          maxZoom: 8,
+          minZoom: 2,
+          pane: "overlayPane",
+        }).addTo(map);
+
+        L.control.zoom({ position: "bottomright" }).addTo(map);
+
+        state.map.instance = map;
+        state.map.layer = L.layerGroup().addTo(map);
+      }
+
+      function renderMap() {
+        const map = state.map.instance;
+        const layer = state.map.layer;
+        layer.clearLayers();
+
+        const summaries = buildCountrySummaries(state.filteredRecords).filter((summary) => summary.hasGeo);
+        elements.mapSummaryTag.textContent = summaries.length
+          ? `${numberFormat(summaries.length)} mapped countries`
+          : "No mapped countries";
+        elements.mapCaptionText.textContent = summaries.length
+          ? state.map.mode === "overview"
+            ? "Bubble size reflects filtered alert volume. Use the country filter or click a marker to zoom into one location."
+            : "Bubble size reflects filtered alert volume. Click a marker to pin the country focus panel."
+          : "No geocoded records remain under the current filters.";
+
+        if (!summaries.length) {
+          return;
+        }
+
+        const radiusScale = d3.scaleSqrt()
+          .domain([1, d3.max(summaries, (summary) => summary.alertCount) || 1])
+          .range([8, 26]);
+
+        summaries.forEach((summary) => {
+          const marker = L.circleMarker([summary.lat, summary.lon], {
+            radius: radiusScale(summary.alertCount),
+            color: STATUS_COLORS[summary.statusBucket],
+            fillColor: STATUS_COLORS[summary.statusBucket],
+            fillOpacity: summary.country === state.selectedCountry ? 0.92 : 0.68,
+            weight: summary.country === state.selectedCountry ? 3 : 1.6,
+            opacity: 0.95,
+          });
+
+          marker.bindTooltip(buildMapTooltip(summary), {
+            direction: "top",
+            sticky: true,
+            offset: [0, -8],
+            className: "map-tooltip",
+          });
+
+          marker.on("click", () => {
+            state.map.mode = "country";
+            state.selectedCountry = summary.country;
+            state.selectedRecordId = summary.latestRecord?.record_id || null;
+            renderEverything();
+            focusMapOnCountry(summary, true);
+          });
+
+          marker.addTo(layer);
+        });
+
+        const selectedSummary = summaries.find((summary) => summary.country === state.selectedCountry) || summaries[0];
+        if (state.map.mode === "country" && selectedSummary) {
+          focusMapOnCountry(selectedSummary, false);
+        } else {
+          focusMapOverview(false);
+        }
+
+        setTimeout(() => map.invalidateSize(), 40);
+      }
+
+      function focusMapOverview(animate) {
+        state.map.instance.setView(PACIFIC_OVERVIEW.center, PACIFIC_OVERVIEW.zoom, {
+          animate,
+          duration: 0.6,
+        });
+      }
+
+      function focusMapOnCountry(summary, animate) {
+        if (!summary || !summary.hasGeo) {
+          return;
+        }
+        state.map.instance.setView([summary.lat, summary.lon], Math.max(state.map.instance.getZoom(), 4.25), {
+          animate,
+          duration: 0.6,
+        });
+      }
+
+      function renderFocusPanel() {
+        const summaries = buildCountrySummaries(state.filteredRecords);
+        const selectedSummary = summaries.find((summary) => summary.country === state.selectedCountry) || summaries[0] || null;
+        const selectedRecord = getSelectedRecord(selectedSummary);
+
+        if (!selectedSummary) {
+          elements.focusCountryName.textContent = "No matching countries";
+          elements.focusCountryIntro.textContent = "Adjust the filters to bring alerts back into scope.";
+          elements.focusStatGrid.innerHTML = "";
+          elements.focusStatusList.innerHTML = '<div class="muted">No status data.</div>';
+          elements.focusDiseaseList.innerHTML = '<div class="muted">No disease data.</div>';
+          renderSelectedRecord(null);
+          return;
+        }
+
+        elements.focusCountryName.textContent = selectedSummary.country;
+        elements.focusCountryIntro.textContent = selectedSummary.latestRecord?.dateValue
+          ? `Latest signal recorded on ${dayFormat(selectedSummary.latestRecord.dateValue)}.`
+          : "Latest signal does not include a parsed reporting date.";
+
+        const focusStats = [
+          { label: "Alerts", value: numberFormat(selectedSummary.alertCount) },
+          { label: "Diseases", value: numberFormat(selectedSummary.diseaseCount) },
+          { label: "Latest cases", value: selectedSummary.latestCases != null ? numberFormat(selectedSummary.latestCases) : "-" },
+          { label: "Latest deaths", value: selectedSummary.latestDeaths != null ? numberFormat(selectedSummary.latestDeaths) : "-" },
+        ];
+
+        elements.focusStatGrid.innerHTML = focusStats
+          .map(
+            (stat) => `
+              <div class="stat-box">
+                <span>${escapeHtml(stat.label)}</span>
+                <strong>${escapeHtml(String(stat.value))}</strong>
+              </div>
+            `
+          )
+          .join("");
+
+        elements.focusStatusList.innerHTML = selectedSummary.rawStatuses.length
+          ? selectedSummary.rawStatuses
+              .map(
+                (status) => `
+                  <div class="mini-row">
+                    <span>${escapeHtml(status.label)}</span>
+                    <strong>${numberFormat(status.value)}</strong>
+                  </div>
+                `
+              )
+              .join("")
+          : '<div class="muted">No status data.</div>';
+
+        elements.focusDiseaseList.innerHTML = selectedSummary.topDiseases.length
+          ? selectedSummary.topDiseases
+              .map(
+                (disease) => `
+                  <div class="mini-row">
+                    <span>${escapeHtml(disease.label)}</span>
+                    <strong>${numberFormat(disease.value)}</strong>
+                  </div>
+                `
+              )
+              .join("")
+          : '<div class="muted">No disease data.</div>';
+
+        renderSelectedRecord(selectedRecord);
+      }
+
+      function getSelectedRecord(selectedSummary) {
+        if (!selectedSummary) {
+          return null;
+        }
+
+        return (
+          state.filteredRecords.find((record) => record.record_id === state.selectedRecordId) ||
+          selectedSummary.latestRecord ||
+          null
+        );
+      }
+
+      function renderSelectedRecord(record) {
+        if (!record) {
+          elements.selectedRecordTitle.textContent = "No alert selected";
+          elements.selectedRecordSubtitle.textContent = "Choose a record from the table or click a map marker.";
+          elements.selectedRecordMeta.innerHTML = "";
+          elements.selectedRecordNarrative.textContent = "No narrative available.";
+          elements.selectedRecordLinks.innerHTML = "";
+          elements.rawRecordPreview.textContent = "No source record available.";
+          elements.selectedRecordRef.textContent = "Source reference unavailable";
+          return;
+        }
+
+        state.selectedRecordId = record.record_id;
+
+        const title = [record.disease, record.normalizedCountry].filter(Boolean).join(" in ");
+        elements.selectedRecordTitle.textContent = title || record.report_title || "Untitled alert";
+        elements.selectedRecordSubtitle.textContent =
+          record.report_title || record.outbreak_name || `${formatSourceSystem(record.source_system)} source record`;
+
+        elements.selectedRecordMeta.innerHTML = [
+          createStatusPill(record.normalizedStatus, record.statusBucket),
+          `<div class="record-pill">${escapeHtml(record.normalizedDiseaseType)}</div>`,
+          `<div class="record-pill">${escapeHtml(formatSourceSystem(record.source_system))}</div>`,
+          `<div class="record-pill">${escapeHtml(formatRecordDate(record))}</div>`,
+        ].join("");
+
+        elements.selectedRecordNarrative.textContent = shortenText(
+          record.narrativeSource || record.report_title || "No narrative available for this alert.",
+          1100
+        );
+
+        const links = [];
+        if (record.report_url) {
+          links.push(`<a class="record-link" href="${escapeAttribute(record.report_url)}" target="_blank" rel="noreferrer">Open report</a>`);
+        }
+        if (record.original_source_url && record.original_source_url !== record.report_url) {
+          links.push(`<a class="record-link" href="${escapeAttribute(record.original_source_url)}" target="_blank" rel="noreferrer">Original source</a>`);
+        }
+        elements.selectedRecordLinks.innerHTML = links.join("");
+
+        const rawRecord = resolveSourceRecord(record);
+        elements.rawRecordPreview.textContent = rawRecord ? JSON.stringify(rawRecord, null, 2) : "No source record available.";
+        elements.selectedRecordRef.textContent = `${record.source_ref?.record_path || "Unknown source record path"}`;
+      }
+
+      function renderTimeline() {
+        const container = elements.timelineChart;
+        container.innerHTML = "";
+
+        const datedRecords = state.filteredRecords.filter((record) => record.monthKey);
+        if (!datedRecords.length) {
+          container.innerHTML = '<div class="empty-state">No dated records remain in the current filter scope.</div>';
+          elements.timelineWindow.textContent = "No timeline";
+          return;
+        }
+
+        const domain = d3.extent(datedRecords, (record) => record.monthKey);
+        const months = d3.utcMonth.range(domain[0], d3.utcMonth.offset(domain[1], 1));
+        const counts = d3.rollup(datedRecords, (values) => values.length, (record) => +record.monthKey);
+        const series = months.map((month) => ({
+          date: month,
+          alerts: counts.get(+month) || 0,
+        }));
+        const smoothed = series.map((point, index, array) => {
+          const slice = array.slice(Math.max(0, index - 1), Math.min(array.length, index + 2));
+          return {
+            ...point,
+            average: d3.mean(slice, (item) => item.alerts),
+          };
+        });
+
+        elements.timelineWindow.textContent = `${monthFormat(series[0].date)} to ${monthFormat(series[series.length - 1].date)}`;
+
+        const width = container.clientWidth || 720;
+        const height = container.clientHeight || 290;
+        const margin = { top: 12, right: 22, bottom: 36, left: 50 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        const svg = d3.select(container)
+          .append("svg")
+          .attr("viewBox", `0 0 ${width} ${height}`)
+          .attr("role", "img")
+          .attr("aria-label", "Monthly alert timeline");
+
+        const defs = svg.append("defs");
+        const gradient = defs.append("linearGradient")
+          .attr("id", "timelineGradient")
+          .attr("x1", "0%")
+          .attr("x2", "0%")
+          .attr("y1", "0%")
+          .attr("y2", "100%");
+        gradient.append("stop").attr("offset", "0%").attr("stop-color", "rgba(15, 118, 110, 0.45)");
+        gradient.append("stop").attr("offset", "100%").attr("stop-color", "rgba(15, 118, 110, 0.02)");
+
+        const plot = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        const x = d3.scaleUtc().domain(d3.extent(series, (d) => d.date)).range([0, innerWidth]);
+        const y = d3.scaleLinear().domain([0, d3.max(series, (d) => d.alerts) || 1]).nice().range([innerHeight, 0]);
+
+        plot.append("g")
+          .attr("transform", `translate(0,${innerHeight})`)
+          .call(d3.axisBottom(x).ticks(Math.min(8, series.length)).tickFormat(d3.utcFormat("%Y")))
+          .call((axis) => axis.selectAll("text").attr("fill", "#405767"))
+          .call((axis) => axis.selectAll("line,path").attr("stroke", "rgba(16, 35, 53, 0.12)"));
+
+        plot.append("g")
+          .call(d3.axisLeft(y).ticks(5))
+          .call((axis) => axis.selectAll("text").attr("fill", "#405767"))
+          .call((axis) => axis.selectAll("line,path").attr("stroke", "rgba(16, 35, 53, 0.12)"));
+
+        plot.append("g")
+          .attr("class", "grid-lines")
+          .call(
+            d3.axisLeft(y)
+              .ticks(5)
+              .tickSize(-innerWidth)
+              .tickFormat("")
+          )
+          .call((axis) => axis.selectAll("line").attr("stroke", "rgba(16, 35, 53, 0.08)"))
+          .call((axis) => axis.select("path").remove());
+
+        const area = d3.area()
+          .x((d) => x(d.date))
+          .y0(innerHeight)
+          .y1((d) => y(d.alerts))
+          .curve(d3.curveMonotoneX);
+
+        const line = d3.line()
+          .x((d) => x(d.date))
+          .y((d) => y(d.average))
+          .curve(d3.curveMonotoneX);
+
+        plot.append("path")
+          .datum(series)
+          .attr("fill", "url(#timelineGradient)")
+          .attr("d", area);
+
+        plot.append("path")
+          .datum(smoothed)
+          .attr("fill", "none")
+          .attr("stroke", "#0f766e")
+          .attr("stroke-width", 3)
+          .attr("stroke-linecap", "round")
+          .attr("d", line);
+
+        plot.selectAll("circle")
+          .data(series.filter((_, index) => index % Math.max(1, Math.floor(series.length / 18)) === 0 || index === series.length - 1))
+          .enter()
+          .append("circle")
+          .attr("cx", (d) => x(d.date))
+          .attr("cy", (d) => y(d.alerts))
+          .attr("r", 3.5)
+          .attr("fill", "#102335")
+          .append("title")
+          .text((d) => `${monthFormat(d.date)}: ${numberFormat(d.alerts)} alerts`);
+      }
+
+      function renderDiseaseChart() {
+        const container = elements.diseaseChart;
+        container.innerHTML = "";
+        const data = Array.from(
+          d3.rollup(state.filteredRecords, (values) => ({
+            count: values.length,
+            diseaseType: values[0]?.normalizedDiseaseType || "Unknown",
+          }), (record) => record.disease),
+          ([label, values]) => ({
+            label,
+            value: values.count,
+            diseaseType: values.diseaseType,
+          })
+        )
+          .sort((a, b) => d3.descending(a.value, b.value))
+          .slice(0, 8);
+
+        if (!data.length) {
+          container.innerHTML = '<div class="empty-state">No disease data in the current filter scope.</div>';
+          return;
+        }
+
+        renderHorizontalBars(container, data, {
+          valueLabel: "alerts",
+          colorAccessor: (item) => TYPE_COLORS[item.diseaseType] || TYPE_COLORS.Unknown,
+        });
+      }
+
+      function renderCountryChart() {
+        const container = elements.countryChart;
+        container.innerHTML = "";
+        const data = buildCountrySummaries(state.filteredRecords)
+          .slice(0, 8)
+          .map((summary) => ({
+            label: summary.country,
+            value: summary.alertCount,
+            statusBucket: summary.statusBucket,
+          }));
+
+        if (!data.length) {
+          container.innerHTML = '<div class="empty-state">No country data in the current filter scope.</div>';
+          return;
+        }
+
+        renderHorizontalBars(container, data, {
+          valueLabel: "alerts",
+          colorAccessor: (item) => STATUS_COLORS[item.statusBucket],
+        });
+      }
+
+      function renderHorizontalBars(container, data, options) {
+        const width = container.clientWidth || 420;
+        const height = container.clientHeight || 290;
+        const margin = { top: 10, right: 18, bottom: 24, left: 170 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        const svg = d3.select(container)
+          .append("svg")
+          .attr("viewBox", `0 0 ${width} ${height}`)
+          .attr("role", "img");
+
+        const plot = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        const y = d3.scaleBand().domain(data.map((item) => item.label)).range([0, innerHeight]).padding(0.22);
+        const x = d3.scaleLinear().domain([0, d3.max(data, (item) => item.value) || 1]).nice().range([0, innerWidth]);
+
+        plot.append("g")
+          .call(d3.axisLeft(y).tickSize(0))
+          .call((axis) => axis.selectAll("text").attr("fill", "#102335").style("font-size", "12px"))
+          .call((axis) => axis.select("path").remove());
+
+        plot.append("g")
+          .attr("transform", `translate(0,${innerHeight})`)
+          .call(d3.axisBottom(x).ticks(4).tickSizeOuter(0))
+          .call((axis) => axis.selectAll("text").attr("fill", "#405767"))
+          .call((axis) => axis.selectAll("line,path").attr("stroke", "rgba(16, 35, 53, 0.12)"));
+
+        plot.selectAll("rect.bar-bg")
+          .data(data)
+          .enter()
+          .append("rect")
+          .attr("class", "bar-bg")
+          .attr("x", 0)
+          .attr("y", (item) => y(item.label))
+          .attr("height", y.bandwidth())
+          .attr("width", innerWidth)
+          .attr("rx", 10)
+          .attr("fill", "rgba(16, 35, 53, 0.05)");
+
+        plot.selectAll("rect.bar")
+          .data(data)
+          .enter()
+          .append("rect")
+          .attr("class", "bar")
+          .attr("x", 0)
+          .attr("y", (item) => y(item.label))
+          .attr("height", y.bandwidth())
+          .attr("width", (item) => x(item.value))
+          .attr("rx", 10)
+          .attr("fill", (item) => options.colorAccessor(item));
+
+        plot.selectAll("text.bar-label")
+          .data(data)
+          .enter()
+          .append("text")
+          .attr("class", "bar-label")
+          .attr("x", (item) => x(item.value) + 8)
+          .attr("y", (item) => y(item.label) + y.bandwidth() / 2 + 4)
+          .attr("fill", "#102335")
+          .style("font-size", "12px")
+          .style("font-weight", 800)
+          .text((item) => numberFormat(item.value));
+      }
+
+      function renderTable() {
+        const rows = state.filteredSortedRecords;
+        const totalRows = rows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / state.pageSize));
+        state.currentPage = Math.min(state.currentPage, totalPages);
+        const start = (state.currentPage - 1) * state.pageSize;
+        const end = start + state.pageSize;
+        const pageRows = rows.slice(start, end);
+
+        elements.tableSummary.textContent = totalRows
+          ? `${numberFormat(totalRows)} filtered records, sorted by ${formatSortLabel(state.sortKey)} (${state.sortDir}).`
+          : "No records match the current filter scope.";
+
+        if (!pageRows.length) {
+          elements.tableBody.innerHTML = '<tr><td colspan="8"><div class="empty-state">No alerts remain after filtering.</div></td></tr>';
+          elements.paginationSummary.textContent = "No rows to display.";
+          elements.prevPage.disabled = true;
+          elements.nextPage.disabled = true;
+          return;
+        }
+
+        elements.tableBody.innerHTML = pageRows
+          .map((record) => {
+            const selectedClass = record.record_id === state.selectedRecordId ? "is-selected" : "";
+            return `
+              <tr class="${selectedClass}" data-record-id="${escapeAttribute(record.record_id)}">
+                <td>${escapeHtml(formatRecordDate(record))}</td>
+                <td>
+                  <strong>${escapeHtml(record.normalizedCountry)}</strong>
+                  <div class="muted">${escapeHtml(record.country || "")}</div>
+                </td>
+                <td>
+                  <strong>${escapeHtml(record.disease || "Unknown")}</strong>
+                  <div class="muted">${escapeHtml(record.report_title || record.outbreak_name || "")}</div>
+                </td>
+                <td>${escapeHtml(record.normalizedDiseaseType)}</td>
+                <td>${createStatusPill(record.normalizedStatus, record.statusBucket)}</td>
+                <td>${record.casesValue != null ? numberFormat(record.casesValue) : "-"}</td>
+                <td>${record.deathsValue != null ? numberFormat(record.deathsValue) : "-"}</td>
+                <td><span class="source-pill">${escapeHtml(formatSourceSystem(record.source_system))}</span></td>
+              </tr>
+            `;
+          })
+          .join("");
+
+        elements.tableBody.querySelectorAll("tr[data-record-id]").forEach((row) => {
+          row.addEventListener("click", () => {
+            const recordId = row.getAttribute("data-record-id");
+            const record = state.filteredRecords.find((item) => item.record_id === recordId);
+            if (!record) {
+              return;
+            }
+            state.map.mode = "country";
+            state.selectedCountry = record.normalizedCountry;
+            state.selectedRecordId = record.record_id;
+            renderEverything();
+            const summaries = buildCountrySummaries(state.filteredRecords);
+            const summary = summaries.find((item) => item.country === record.normalizedCountry);
+            if (summary) {
+              focusMapOnCountry(summary, true);
+            }
+          });
+        });
+
+        elements.paginationSummary.textContent = `Showing ${numberFormat(start + 1)}-${numberFormat(Math.min(end, totalRows))} of ${numberFormat(totalRows)} records.`;
+        elements.prevPage.disabled = state.currentPage <= 1;
+        elements.nextPage.disabled = state.currentPage >= totalPages;
+      }
+
+      function buildCountrySummaries(records) {
+        const grouped = d3.group(records, (record) => record.normalizedCountry);
+        return Array.from(grouped, ([country, entries]) => {
+          const geoEntries = entries.filter((record) => record.hasGeo);
+          const latestRecord = entries.slice().sort((a, b) => d3.descending(a.dateValue, b.dateValue))[0] || entries[0];
+          const rawStatuses = Array.from(d3.rollup(entries, (values) => values.length, (record) => record.normalizedStatus), ([label, value]) => ({ label, value }))
+            .sort((a, b) => d3.descending(a.value, b.value));
+          const topDiseases = Array.from(d3.rollup(entries, (values) => values.length, (record) => record.disease), ([label, value]) => ({ label, value }))
+            .sort((a, b) => d3.descending(a.value, b.value))
+            .slice(0, 5);
+          const bucketCounts = d3.rollup(entries, (values) => values.length, (record) => record.statusBucket);
+          const latestCasesRecord = entries.filter((record) => record.casesValue != null).sort((a, b) => d3.descending(a.dateValue, b.dateValue))[0];
+          const latestDeathsRecord = entries.filter((record) => record.deathsValue != null).sort((a, b) => d3.descending(a.dateValue, b.dateValue))[0];
+          return {
+            country,
+            entries,
+            hasGeo: geoEntries.length > 0,
+            lat: geoEntries.length ? d3.mean(geoEntries, (record) => record.lat) : null,
+            lon: geoEntries.length ? d3.mean(geoEntries, (record) => record.lon) : null,
+            alertCount: entries.length,
+            diseaseCount: new Set(entries.map((record) => record.disease)).size,
+            statusBucket: STATUS_BUCKET_ORDER.find((bucket) => bucketCounts.get(bucket)) || "Other",
+            rawStatuses,
+            topDiseases,
+            latestRecord,
+            latestCases: latestCasesRecord?.casesValue ?? null,
+            latestDeaths: latestDeathsRecord?.deathsValue ?? null,
+          };
+        }).sort((a, b) => d3.descending(a.alertCount, b.alertCount));
+      }
+
+      function sortRecords(records) {
+        const direction = state.sortDir === "asc" ? 1 : -1;
+        return records.sort((a, b) => {
+          const comparisons = {
+            date: compareValues(a.dateValue?.getTime() || 0, b.dateValue?.getTime() || 0),
+            country: compareValues(a.normalizedCountry, b.normalizedCountry),
+            disease: compareValues(a.disease, b.disease),
+            type: compareValues(a.normalizedDiseaseType, b.normalizedDiseaseType),
+            status: compareValues(a.normalizedStatus, b.normalizedStatus),
+            cases: compareValues(a.casesValue ?? -1, b.casesValue ?? -1),
+            deaths: compareValues(a.deathsValue ?? -1, b.deathsValue ?? -1),
+            source: compareValues(formatSourceSystem(a.source_system), formatSourceSystem(b.source_system)),
+          };
+          return (comparisons[state.sortKey] || 0) * direction;
+        });
+      }
+
+      function compareValues(a, b) {
+        if (typeof a === "string" || typeof b === "string") {
+          return String(a || "").localeCompare(String(b || ""));
+        }
+        return d3.ascending(a, b);
+      }
+
+      function formatSortLabel(sortKey) {
+        return {
+          date: "date",
+          country: "country",
+          disease: "disease",
+          type: "disease type",
+          status: "status",
+          cases: "case count",
+          deaths: "death count",
+          source: "source",
+        }[sortKey] || sortKey;
+      }
+
+      function normalizeCountryName(country) {
+        return COUNTRY_ALIASES[country] || country || "Unknown";
+      }
+
+      function normalizeLongitude(value) {
+        if (!Number.isFinite(value)) {
+          return null;
+        }
+        return value > 180 ? value - 360 : value;
+      }
+
+      function deriveStatusBucket(status) {
+        const value = String(status || "").toLowerCase();
+        if (!value) return "Other";
+        if (value.includes("increasing")) return "Escalating";
+        if (value.includes("ongoing") && !value.includes("decreasing")) return "Active";
+        if (value.includes("decreasing")) return "Monitoring";
+        if (value.includes("awaiting")) return "Watch";
+        if (value.includes("past") || value.includes("closed") || value.includes("ended") || value.includes("over")) return "Closed";
+        return "Other";
+      }
+
+      function formatSourceSystem(value) {
+        return value === "spc" ? "SPC" : value === "reliefweb" ? "ReliefWeb" : "Unknown";
+      }
+
+      function formatRecordDate(record) {
+        if (record.dateValue) {
+          return dayFormat(record.dateValue);
+        }
+        return record.report_date || record.event_date || "Undated";
+      }
+
+      function createStatusPill(label, bucket) {
+        const color = STATUS_COLORS[bucket] || STATUS_COLORS.Other;
+        const background = `${color}1A`;
+        return `<span class="status-pill" style="background:${background};color:${color}">${escapeHtml(label)}</span>`;
+      }
+
+      function buildMapTooltip(summary) {
+        const latestDate = summary.latestRecord?.dateValue ? dayFormat(summary.latestRecord.dateValue) : "Undated";
+        return `
+          <div class="tooltip-card">
+            <h4>${escapeHtml(summary.country)}</h4>
+            <dl>
+              <dt>Alerts</dt><dd>${numberFormat(summary.alertCount)}</dd>
+              <dt>Diseases</dt><dd>${numberFormat(summary.diseaseCount)}</dd>
+              <dt>Status</dt><dd>${escapeHtml(summary.statusBucket)}</dd>
+              <dt>Latest</dt><dd>${escapeHtml(latestDate)}</dd>
+            </dl>
+          </div>
+        `;
+      }
+
+      function resolveSourceRecord(record) {
+        const documentKey = record?.source_ref?.document_key;
+        const recordIndex = record?.source_ref?.record_index;
+        return state.rawData?.source_documents?.[documentKey]?.records?.[recordIndex] || null;
+      }
+
+      function showLoader() {
+        elements.loaderOverlay.classList.add("is-visible");
+      }
+
+      function hideLoader() {
+        elements.loaderOverlay.classList.remove("is-visible");
+        setTimeout(() => state.map.instance?.invalidateSize(), 60);
+      }
+
+      function updateLoaderStatus(message) {
+        elements.loaderStatus.innerHTML = message;
+      }
+
+      function handleResize() {
+        state.map.instance?.invalidateSize();
+        renderTimeline();
+        renderDiseaseChart();
+        renderCountryChart();
+      }
+
+      function uniqueValues(values) {
+        return Array.from(new Set(values.filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b)));
+      }
+
+      function toNumber(value) {
+        if (value == null || value === "") {
+          return null;
+        }
+        const normalized = Number(String(value).replace(/,/g, "").trim());
+        return Number.isFinite(normalized) ? normalized : null;
+      }
+
+      function debounce(fn, delay) {
+        let timeoutId = null;
+        return (...args) => {
+          window.clearTimeout(timeoutId);
+          timeoutId = window.setTimeout(() => fn(...args), delay);
+        };
+      }
+
+      function shortenText(value, limit) {
+        if (!value) {
+          return "No narrative available.";
+        }
+        if (value.length <= limit) {
+          return value;
+        }
+        return `${value.slice(0, limit).trim()}...`;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function escapeAttribute(value) {
+        return escapeHtml(value).replace(/`/g, "&#96;");
+      }
+    </script>
+  </body>
+</html>
