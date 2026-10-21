@@ -8,7 +8,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<<<<<<< HEAD
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css" />
+=======
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
   <style>
     :root {
       --bg: #f2f4ef;
@@ -396,6 +401,7 @@
       border: 1px solid rgba(16, 35, 53, 0.07);
     }
 
+<<<<<<< HEAD
     .maplibregl-popup-content {
       border-radius: 18px;
       background: transparent;
@@ -403,6 +409,8 @@
       box-shadow: none;
     }
 
+=======
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
     .map-caption {
       display: flex;
       justify-content: space-between;
@@ -701,6 +709,21 @@
       font-weight: 800;
     }
 
+<<<<<<< HEAD
+=======
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 88px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(16, 35, 53, 0.06);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
     .pagination {
       display: flex;
       justify-content: space-between;
@@ -785,11 +808,30 @@
       line-height: 1.7;
     }
 
+<<<<<<< HEAD
     .maplibregl-map {
       font: inherit;
     }
 
     .maplibregl-popup-tip {
+=======
+    .leaflet-container {
+      font: inherit;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+        linear-gradient(180deg, rgba(229, 243, 238, 0.95), rgba(241, 246, 243, 0.95));
+    }
+
+    .leaflet-tooltip.map-tooltip {
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .leaflet-tooltip.map-tooltip::before {
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
       display: none;
     }
 
@@ -937,10 +979,19 @@
         <p style="text-align: justify;">
           <img align="left" src="logo.png" />
           Outbreak surveillance in the PICTs across time, disease, and geography. AI-curated real-time operational
+<<<<<<< HEAD
           snapshot; map with alert overlays, dynamic filters, historical trend views, and a
           searchable alert/event ledger. Data sourced using bespoke AI Agent harness with fine-tuned model with custom
           tool-calling across multiple unstructured data sources.
         </p>
+=======
+          snapshot; map with alert overlays, dynamic filters, historical trend views, and a 
+          searchable alert/event ledger. Data sourced using bespoke AI Agent harness with fine-tuned model with custom
+          tool-calling across multiple unstructured data sources.
+
+        </p>
+
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
       </div>
       <aside class="hero-aside">
         <section class="hero-panel">
@@ -967,8 +1018,12 @@
         <section class="hero-panel">
           <h2>Source Integrity</h2>
           <p id="heroSourceNote" style="text-align: justify;">
+<<<<<<< HEAD
             AI-enabled data curation from multiple unstructured sources. Each record is tagged with its source and a
             confidence score
+=======
+            AI-enabled data curation from multiple unstructured sources. Each record is tagged with its source and a confidence score
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
             reflecting the model's assessment of reliability. Use source filters to tailor the view to your needs.
           </p>
         </section>
@@ -1140,6 +1195,10 @@
                 <th><button type="button" data-sort="status">Status</button></th>
                 <th><button type="button" data-sort="cases">Cases</button></th>
                 <th><button type="button" data-sort="deaths">Deaths</button></th>
+<<<<<<< HEAD
+=======
+                <th><button type="button" data-sort="source">Source</button></th>
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -1165,7 +1224,12 @@
   </div>
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
+<<<<<<< HEAD
   <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
+=======
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
   <script>
     const COUNTRY_ALIASES = {
       "Federated states of Micronesia": "Micronesia",
@@ -1221,8 +1285,12 @@
       },
       map: {
         instance: null,
+<<<<<<< HEAD
         loaded: false,
         popup: null,
+=======
+        layer: null,
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
         mode: "overview",
       },
     };
@@ -1663,6 +1731,7 @@
           `
       ).join("");
     }
+<<<<<<< HEAD
 
     function initializeMap() {
       const map = new maplibregl.Map({
@@ -1710,8 +1779,103 @@
           layout: {
             "circle-sort-key": ["get", "sort_order"],
           },
-        });
+=======
 
+    function initializeMap() {
+      const map = L.map(elements.mapElement, {
+        zoomControl: false,
+        attributionControl: false,
+        preferCanvas: true,
+        worldCopyJump: true,
+        minZoom: 2,
+        maxZoom: 8,
+        zoomSnap: 0.25,
+        zoomDelta: 0.5,
+      }).setView(PACIFIC_OVERVIEW.center, PACIFIC_OVERVIEW.zoom);
+
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png", {
+        subdomains: "abcd",
+        maxZoom: 8,
+        minZoom: 2,
+      }).addTo(map);
+
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {
+        subdomains: "abcd",
+        maxZoom: 8,
+        minZoom: 2,
+        pane: "overlayPane",
+      }).addTo(map);
+
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      state.map.instance = map;
+      state.map.layer = L.layerGroup().addTo(map);
+    }
+
+    function renderMap() {
+      const map = state.map.instance;
+      const layer = state.map.layer;
+      layer.clearLayers();
+
+      const summaries = buildCountrySummaries(state.filteredRecords).filter((summary) => summary.hasGeo);
+      elements.mapSummaryTag.textContent = summaries.length
+        ? `${numberFormat(summaries.length)} mapped countries`
+        : "No mapped countries";
+      elements.mapCaptionText.textContent = summaries.length
+        ? state.map.mode === "overview"
+          ? "Bubble size reflects filtered alert volume. Concentric status rings show every alert bucket present for a country. Use the country filter or click a marker to zoom into one location."
+          : "Bubble size reflects filtered alert volume. Concentric status rings show every alert bucket present for a country. Click a marker to pin the country focus panel."
+        : "No geocoded records remain under the current filters.";
+
+      if (!summaries.length) {
+        return;
+      }
+
+      const radiusScale = d3.scaleSqrt()
+        .domain([1, d3.max(summaries, (summary) => summary.alertCount) || 1])
+        .range([8, 26]);
+
+      summaries.forEach((summary) => {
+        const isSelected = summary.country === state.selectedCountry;
+        const baseRadius = radiusScale(summary.alertCount);
+        const ringStatuses = summary.bucketStatuses.length
+          ? summary.bucketStatuses
+          : [{ bucket: summary.statusBucket, value: summary.alertCount }];
+        const ringGap = ringStatuses.length > 1
+          ? Math.min(4, Math.max(1.2, (baseRadius - 4) / (ringStatuses.length - 1)))
+          : 0;
+        const handleMarkerClick = () => {
+          state.map.mode = "country";
+          state.selectedCountry = summary.country;
+          state.selectedRecordId = summary.latestRecord?.record_id || null;
+          renderEverything();
+          focusMapOnCountry(summary, true);
+        };
+
+        ringStatuses.forEach((bucketStatus, index) => {
+          const marker = L.circleMarker([summary.lat, summary.lon], {
+            radius: Math.max(4, baseRadius - index * ringGap),
+            color: STATUS_COLORS[bucketStatus.bucket] || STATUS_COLORS.Other,
+            fillColor: STATUS_COLORS[bucketStatus.bucket] || STATUS_COLORS.Other,
+            fillOpacity: isSelected ? 0.16 : 0.08,
+            weight: isSelected ? 2.5 : 1.5,
+            opacity: isSelected ? 0.96 : 0.78,
+          });
+
+          marker.bindTooltip(buildMapTooltip(summary), {
+            direction: "top",
+            sticky: true,
+            offset: [0, -8],
+            className: "map-tooltip",
+          });
+
+          marker.on("click", handleMarkerClick);
+          marker.addTo(layer);
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
+        });
+      });
+
+<<<<<<< HEAD
         map.on("mousemove", "country-alert-circles", (event) => {
           const feature = event.features?.[0];
           const country = feature?.properties?.country;
@@ -1866,6 +2030,62 @@
         { label: "Latest deaths", value: selectedSummary.latestDeaths != null ? numberFormat(selectedSummary.latestDeaths) : "-" },
       ];
 
+=======
+      const selectedSummary = summaries.find((summary) => summary.country === state.selectedCountry) || summaries[0];
+      if (state.map.mode === "country" && selectedSummary) {
+        focusMapOnCountry(selectedSummary, false);
+      } else {
+        focusMapOverview(false);
+      }
+
+      setTimeout(() => map.invalidateSize(), 40);
+    }
+
+    function focusMapOverview(animate) {
+      state.map.instance.setView(PACIFIC_OVERVIEW.center, PACIFIC_OVERVIEW.zoom, {
+        animate,
+        duration: 0.6,
+      });
+    }
+
+    function focusMapOnCountry(summary, animate) {
+      if (!summary || !summary.hasGeo) {
+        return;
+      }
+      state.map.instance.setView([summary.lat, summary.lon], Math.max(state.map.instance.getZoom(), 4.25), {
+        animate,
+        duration: 0.6,
+      });
+    }
+
+    function renderFocusPanel() {
+      const summaries = buildCountrySummaries(state.filteredRecords);
+      const selectedSummary = summaries.find((summary) => summary.country === state.selectedCountry) || summaries[0] || null;
+      const selectedRecord = getSelectedRecord(selectedSummary);
+
+      if (!selectedSummary) {
+        elements.focusCountryName.textContent = "No matching countries";
+        elements.focusCountryIntro.textContent = "Adjust the filters to bring alerts back into scope.";
+        elements.focusStatGrid.innerHTML = "";
+        elements.focusStatusList.innerHTML = '<div class="muted">No status data.</div>';
+        elements.focusDiseaseList.innerHTML = '<div class="muted">No disease data.</div>';
+        renderSelectedRecord(null);
+        return;
+      }
+
+      elements.focusCountryName.textContent = selectedSummary.country;
+      elements.focusCountryIntro.textContent = selectedSummary.latestRecord?.dateValue
+        ? `Latest signal recorded on ${dayFormat(selectedSummary.latestRecord.dateValue)}.`
+        : "Latest signal does not include a parsed reporting date.";
+
+      const focusStats = [
+        { label: "Alerts", value: numberFormat(selectedSummary.alertCount) },
+        { label: "Diseases", value: numberFormat(selectedSummary.diseaseCount) },
+        { label: "Latest cases", value: selectedSummary.latestCases != null ? numberFormat(selectedSummary.latestCases) : "-" },
+        { label: "Latest deaths", value: selectedSummary.latestDeaths != null ? numberFormat(selectedSummary.latestDeaths) : "-" },
+      ];
+
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
       elements.focusStatGrid.innerHTML = focusStats
         .map(
           (stat) => `
@@ -2203,7 +2423,11 @@
         : "No records match the current filter scope.";
 
       if (!pageRows.length) {
+<<<<<<< HEAD
         elements.tableBody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No alerts remain after filtering.</div></td></tr>';
+=======
+        elements.tableBody.innerHTML = '<tr><td colspan="8"><div class="empty-state">No alerts remain after filtering.</div></td></tr>';
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
         elements.paginationSummary.textContent = "No rows to display.";
         elements.prevPage.disabled = true;
         elements.nextPage.disabled = true;
@@ -2398,7 +2622,11 @@
 
     function hideLoader() {
       elements.loaderOverlay.classList.remove("is-visible");
+<<<<<<< HEAD
       setTimeout(() => state.map.instance?.resize(), 60);
+=======
+      setTimeout(() => state.map.instance?.invalidateSize(), 60);
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
     }
 
     function updateLoaderStatus(message) {
@@ -2406,7 +2634,11 @@
     }
 
     function handleResize() {
+<<<<<<< HEAD
       state.map.instance?.resize();
+=======
+      state.map.instance?.invalidateSize();
+>>>>>>> 49e29719ccde87fa48d78aee1e1154f53a46a6ea
       renderTimeline();
       renderDiseaseChart();
       renderCountryChart();
